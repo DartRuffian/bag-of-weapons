@@ -42,7 +42,7 @@ for filename in os.listdir("./cogs"):
         bot.load_extension(f"cogs.{filename[:-3]}")
 
 
-#keep_alive()
+keep_alive()
 try:
     # When running locally
     with open("token.txt","r") as f:
