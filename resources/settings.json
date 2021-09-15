@@ -1,12 +1,12 @@
 {
-    "754064902611796008": {
-        "crit_chance": 6,
-        "hit_chance": 80,
-        "fight_channel": 814316362465935371
-    },
-    "844325997566099497": {
-        "crit_chance": 6,
-        "hit_chance": 80,
-        "fight_channel": 845068173832224788
-    }
+  "754064902611796008": {
+    "crit_chance": 6,
+    "hit_chance": 80,
+    "fight_channel": 814316362465935371
+  },
+  "844325997566099497": {
+    "crit_chance": 6,
+    "hit_chance": 80,
+    "fight_channel": 845068173832224788
+  }
 }

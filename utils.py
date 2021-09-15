@@ -41,7 +41,7 @@ class Utils:
         )
 
         if target_stats[0] > 0:
-            stat_embed.description=f":heart: **| {target_stats[0]}**"
+            stat_embed.description=f":heart: **| {target_stats[0]}/100**"
         
         else:
             target_cooldown_end = datetime.strptime(target_stats[1], "%Y-%m-%d %H:%M:%S.%f")
@@ -65,3 +65,32 @@ class Utils:
         with open("stats.json", "w") as f:
             dump(bot.member_stats, f, indent=2)
         chdir(bot.BASE_DIR)
+
+    def check_cooldown(bot, member_to_check:discord.Member):
+        # Returns a tuple of whether the user is on cooldown and their remaining cooldown (if applicable)
+        # (is_on_cooldown, remaining_time)
+
+        current_time = datetime.now()
+        # Get the user's remaining cooldown (if dead)
+        try:
+            bot.member_stats[str(member_to_check.id)]
+        except KeyError:
+            bot.member_stats[str(member_to_check.id)] = [100, None, None]
+        
+        cooldown_end = bot.member_stats[str(member_to_check.id)][1]
+        
+        if cooldown_end is None:
+            return (False, None)
+        
+        # Convert the cooldown's end to a datetime object from string
+        cooldown_end = datetime.strptime(cooldown_end, "%Y-%m-%d %H:%M:%S.%f")
+        
+        # User has a cooldown, but has passed
+        if current_time >= cooldown_end: 
+            bot.member_stats[str(member_to_check.id)] = [100, None, None]
+
+            Utils.save_stats(bot)
+            return (False, None)
+        
+        else:
+            return (True, cooldown_end-current_time)

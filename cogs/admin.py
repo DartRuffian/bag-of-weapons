@@ -32,6 +32,7 @@ class Admin_Commands(commands.Cog):
     @Utils.is_owner()
     async def reset_stats(self, ctx):
         # Resets stats for all users
+        await ctx.message.delete()
         os.chdir(f"{self.bot.BASE_DIR}/resources")
         self.bot.member_stats = {}
         with open("stats.json", "w") as f:
@@ -39,6 +40,7 @@ class Admin_Commands(commands.Cog):
                 self.bot.member_stats[str(user.id)] = [100, None, None]
             json.dump(self.bot.member_stats, f, indent=2)
         os.chdir(self.bot.BASE_DIR)
+        await ctx.send("User data is being reset...", delete_after=3)
 
 
 def setup(bot):

@@ -16,7 +16,7 @@ class Stat_Viewer(commands.Cog, name="Stats"):
     )
     async def view_stats(self, ctx, target:discord.Member=None):
         target = target or ctx.author
-
+        Utils.check_cooldown(self.bot, target)
         stat_embed = Utils.get_stat_embed(self.bot, target=target)
         
         await ctx.send(embed=stat_embed)

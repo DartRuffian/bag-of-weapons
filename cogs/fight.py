@@ -8,6 +8,7 @@ from discord.ext import commands
 # Other Imports
 from datetime import datetime, timedelta
 from random import randint
+from asyncio import sleep as async_sleep
 import json
 import os
 
@@ -17,35 +18,6 @@ from utils import Utils
 class Fight_Commands(commands.Cog, name="Fight Commands"):
     def __init__(self, bot):
         self.bot = bot
-
-    def check_cooldown(self, member_to_check:discord.Member):
-        # Returns a tuple of whether the user is on cooldown and their remaining cooldown (if applicable)
-        # (is_on_cooldown, remaining_time)
-
-        current_time = datetime.now()
-        # Get the user's remaining cooldown (if dead)
-        try:
-            self.bot.member_stats[str(member_to_check.id)]
-        except KeyError:
-            self.bot.member_stats[str(member_to_check.id)] = [100, None, None]
-        
-        cooldown_end = self.bot.member_stats[str(member_to_check.id)][1]
-        
-        if cooldown_end is None:
-            return (False, None)
-        
-        # Convert the cooldown's end to a datetime object from string
-        cooldown_end = datetime.strptime(cooldown_end, "%Y-%m-%d %H:%M:%S.%f")
-        
-        # User has a cooldown, but has passed
-        if current_time >= cooldown_end: 
-            self.bot.member_stats[str(member_to_check.id)] = [100, None, None]
-
-            Utils.save_stats(self.bot)
-            return (False, None)
-        
-        else:
-            return (True, cooldown_end-current_time)
 
     def calculate_damage(self, server_id, min:int, max:int):
         # Returns a tuple of the hit status and the damage dealt
@@ -80,8 +52,15 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             settings = json.load(f)
         os.chdir(self.bot.BASE_DIR)
 
+        try: 
+            settings[str(ctx.guild.id)]["fight_channel"]
+        except KeyError:
+            await ctx.send("This server does not currently have a fight channel set up, ask a server moderator to set one up for you!")
+            return
         if ctx.channel.id != settings[str(ctx.guild.id)]["fight_channel"]:
-            # send message saying improper channel
+            await ctx.send(f"This is not the proper channel to use the fight command in. This server's set channel is <#{settings[str(ctx.guild.id)]['fight_channel']}>", delete_after=5)
+            await async_sleep(5)
+            await ctx.message.delete()
             return
 
         if ctx.author == target:
@@ -90,16 +69,15 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             return
         
         # Check if the user is unconscious
-        is_on_cooldown, time_remaining = self.check_cooldown(ctx.author)
+        is_on_cooldown, time_remaining = Utils.check_cooldown(self.bot, ctx.author)
         if is_on_cooldown is True:
             # User is on cooldown
             killed_by, killed_with = self.bot.member_stats[str(ctx.author.id)][2].split("-|-")
 
-            author_cooldown_end = datetime.strptime(self.bot.member_stats[str(ctx.author.id)][1], "%Y-%m-%d %H:%M:%S.%f")
-            author_time_remaining, _ = str(author_cooldown_end - datetime.now()).split(".") # Remove miliseconds
-            _, author_time_remaining, _ = author_time_remaining.split(':') # Keep only minutes
+            time_remaining, _ = str(time_remaining).split(".") # Remove miliseconds
+            _, time_remaining, _ = time_remaining.split(':') # Keep only minutes
 
-            await ctx.send(f"You're currently unconscious, please try again in {author_time_remaining} minutes. \nYou were killed by {killed_by} using {killed_with}")
+            await ctx.send(f"You're currently unconscious, please try again in {time_remaining} minutes. \nYou were killed by {killed_by} using {killed_with}")
             return
 
         # Check if the target is unconscious
@@ -109,7 +87,9 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             _, target_time_remaining, _ = target_time_remaining.split(':') # Keep only minutes
 
             stat_embed = Utils.get_stat_embed(self.bot, target)
-            await ctx.send(f"{target.nick or target.name} is currently unconscious", embed=stat_embed)
+            #os.chdir(f"{self.bot.BASE_DIR}/resources")
+            already_dead_image = discord.File(f"{self.bot.BASE_DIR}/resources/already_dead.png")
+            await ctx.send(f"{target.nick or target.name} is currently unconscious", file=already_dead_image,embed=stat_embed)
             return
         
         damage_dealt, hit_status = self.calculate_damage(ctx.guild.id, 20, 40) # Get the damage dealt
@@ -143,7 +123,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
         for user in [ctx.author, target]:
             remaining_health_embed.add_field (
                 name=user.nick or user.name,
-                value=f":heart:: {self.bot.member_stats[str(user.id)][0]}/100",
+                value=f"**:heart: | {self.bot.member_stats[str(user.id)][0]}/100**",
                 inline=False
             )
         

@@ -27,7 +27,8 @@ class Error_Handler(commands.Cog):
         non_critical_errors = [
             discord.ext.commands.errors.CommandNotFound,
             discord.ext.commands.errors.CommandOnCooldown,
-            discord.ext.commands.errors.MissingRequiredArgument
+            discord.ext.commands.errors.MissingRequiredArgument,
+            discord.ext.commands.errors.MissingPermissions
         ]
 
         if type(error) not in non_critical_errors:
