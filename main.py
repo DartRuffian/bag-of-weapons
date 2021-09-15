@@ -45,12 +45,8 @@ for filename in os.listdir("./cogs"):
         bot.load_extension(f"cogs.{filename[:-3]}")
 
 # Load all user stats
-os.chdir(f"{bot.BASE_DIR}/resources")
-with open("stats.json", "r") as f:
-    # member_stats = {user_id: [health, cooldown, killed_by]}
-    bot.member_stats = json.load(f)
-    print(f"Loaded stats for {len(bot.member_stats.keys())} users")
-os.chdir(bot.BASE_DIR)
+Utils.refresh_stats(bot)
+print(f"Loaded stats for {len(bot.member_stats.keys())} users")
 
 
 keep_alive()

@@ -4,7 +4,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
-from json import load
+from json import load, dump
 from os import chdir
 
 class Utils:
@@ -15,6 +15,7 @@ class Utils:
         return commands.check(predicate)
     
     def get_server_prefix(bot, message):
+        # Returns a server's prefix
         chdir(f"{bot.BASE_DIR}/resources")
 
         with open("prefixes.json", "r") as f:
@@ -24,6 +25,7 @@ class Utils:
         return prefixes[str(message.guild.id)]
 
     def get_stat_embed(bot, target:discord.Member):
+        # Returns a discord.Embed of the target's stats
         chdir(f"{bot.BASE_DIR}/resources")
         with open("stats.json", "r") as f:
             target_stats = load(f)[str(target.id)]
@@ -39,13 +41,27 @@ class Utils:
         )
 
         if target_stats[0] > 0:
-            stat_embed.description=f":heart:: **{target_stats[0]}**"
+            stat_embed.description=f":heart: **| {target_stats[0]}**"
         
         else:
             target_cooldown_end = datetime.strptime(target_stats[1], "%Y-%m-%d %H:%M:%S.%f")
             target_time_remaining, _ = str(target_cooldown_end - datetime.now()).split(".") # Remove miliseconds
             _, target_time_remaining, _ = target_time_remaining.split(':') # Keep only minutes
 
-            stat_embed.description=f":timer:: **{target_time_remaining} Minutes** \n:skull:: **{target_stats[2].split('-|-')[0]}** \n:crossed_swords:: **{target_stats[2].split('-|-')[1]}**"
+            stat_embed.description=f":timer: **| {target_time_remaining} Minutes \n:skull: | {target_stats[2].split('-|-')[0]} \n:crossed_swords: | {target_stats[2].split('-|-')[1]}**"
         
         return stat_embed
+    
+    def refresh_stats(bot):
+        # Saves the stats.json file to bot.member_stats
+        chdir(f"{bot.BASE_DIR}/resources")
+        with open("stats.json", "r") as f:
+            bot.member_stats = load(f)
+        chdir(bot.BASE_DIR)
+    
+    def save_stats(bot):
+        # Writes the bot.member_stats dictionary to a file
+        chdir(f"{bot.BASE_DIR}/resources")
+        with open("stats.json", "w") as f:
+            dump(bot.member_stats, f, indent=2)
+        chdir(bot.BASE_DIR)

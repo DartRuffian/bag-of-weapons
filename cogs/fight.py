@@ -5,11 +5,14 @@ from inspect import isroutine
 import discord
 from discord.ext import commands
 
-# Imports
+# Other Imports
 from datetime import datetime, timedelta
 from random import randint
 import json
 import os
+
+# Utilities
+from utils import Utils
 
 class Fight_Commands(commands.Cog, name="Fight Commands"):
     def __init__(self, bot):
@@ -38,10 +41,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
         if current_time >= cooldown_end: 
             self.bot.member_stats[str(member_to_check.id)] = [100, None, None]
 
-            os.chdir(f"{self.bot.BASE_DIR}/resources")
-            with open("stats.json", "w") as f:
-                json.dump(self.bot.member_stats, f, indent=2)
-            os.chdir(self.bot.BASE_DIR)
+            Utils.save_stats(self.bot)
             return (False, None)
         
         else:
@@ -79,6 +79,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
         with open("settings.json", "r") as f:
             settings = json.load(f)
         os.chdir(self.bot.BASE_DIR)
+
         if ctx.channel.id != settings[str(ctx.guild.id)]["fight_channel"]:
             # send message saying improper channel
             return
@@ -107,16 +108,14 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             target_time_remaining, _ = str(target_cooldown_end - datetime.now()).split(".") # Remove miliseconds
             _, target_time_remaining, _ = target_time_remaining.split(':') # Keep only minutes
 
-
-            await ctx.send(f"{target.nick or target.name} is currently unconscious. Wait {target_time_remaining} minutes for them to regain consciousness.")
+            stat_embed = Utils.get_stat_embed(self.bot, target)
+            await ctx.send(f"{target.nick or target.name} is currently unconscious", embed=stat_embed)
             return
         
         damage_dealt, hit_status = self.calculate_damage(ctx.guild.id, 20, 40) # Get the damage dealt
 
         # Update user stats
-        os.chdir(f"{self.bot.BASE_DIR}/resources")
-        with open("stats.json", "r") as f:
-            self.bot.member_stats = json.load(f)
+        Utils.refresh_stats(self.bot)
         self.bot.member_stats[str(target.id)][0] -= damage_dealt
 
         # If the target is unconscious, start the cooldown
@@ -125,9 +124,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             self.bot.member_stats[str(target.id)] = [0, str(datetime.now()+timedelta(hours=1)), f"{ctx.author.nick or ctx.author.name}-|-{attack}"]
             kill_message = f"\n\n{target.nick or target.name} was killed by {ctx.author.nick or ctx.author.name} using {attack}"
 
-        with open("stats.json", "w") as f:
-            json.dump(self.bot.member_stats, f, indent=2)
-        os.chdir(self.bot.BASE_DIR)
+        Utils.save_stats(self.bot)
 
         hit_messages = {
             "crit": f"{ctx.author.nick or ctx.author.name} attacked {target.nick or target.name} with {attack}, scored a critical hit, and dealt {damage_dealt} damage!",
@@ -146,7 +143,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
         for user in [ctx.author, target]:
             remaining_health_embed.add_field (
                 name=user.nick or user.name,
-                value=f":heart: {self.bot.member_stats[str(user.id)][0]}/100",
+                value=f":heart:: {self.bot.member_stats[str(user.id)][0]}/100",
                 inline=False
             )
         
