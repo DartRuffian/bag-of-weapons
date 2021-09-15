@@ -45,7 +45,7 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
         description="The most commonly used command, basic text-based combat",
         aliases=["f","a","attack"]
     )
-    @commands.cooldown(1, 0, commands.BucketType.user)
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def fight(self, ctx, target:discord.Member, _, *, attack):
         os.chdir(f"{self.bot.BASE_DIR}/resources")
         with open("settings.json", "r") as f:
@@ -128,6 +128,20 @@ class Fight_Commands(commands.Cog, name="Fight Commands"):
             )
         
         await ctx.send(hit_messages[hit_status]+kill_message, embed=remaining_health_embed)
+    
+    @commands.command (
+        aliases=["dmr"]
+    )
+    @commands.cooldown(1, 60*60*2, commands.BucketType.user)
+    async def swap_health_and_cooldown(self, ctx, target:discord.Member):
+        await ctx.send(f"{ctx.author.nick or ctx.author.name} is extending their Dead Man's Reach and swapped their health with {target.nick or target.name}!")
+        temp_stats = [
+            self.bot.member_stats[str(ctx.author.id)],
+            self.bot.member_stats[str(target.id)]
+        ]
+        self.bot.member_stats[str(target.id)] = temp_stats[0]
+        self.bot.member_stats[str(ctx.author.id)] = temp_stats[1]
+        Utils.save_stats(self.bot)
 
 
 def setup(bot):

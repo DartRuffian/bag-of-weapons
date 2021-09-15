@@ -34,6 +34,9 @@ class Error_Handler(commands.Cog):
         if type(error) not in non_critical_errors:
             await self.bot.AUTHOR.send(f"Full Error Message:\n```py\n{traceback.format_exc()}\n```", embed=error_embed)
         
+        if isinstance(error, discord.ext.commands.errors.CommandNotFound):
+            await ctx.send(f"`...` is not a valid command, you can do `{Utils.get_server_prefix(self.bot, ctx.message)}help` to view a full list of commands.")
+
         await ctx.send(embed=error_embed)
 
 
