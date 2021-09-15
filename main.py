@@ -8,6 +8,8 @@ from webserver import keep_alive
 
 # Other imports
 from pretty_help import PrettyHelp
+from utils import Utils
+import json
 import os
 
 
@@ -15,7 +17,7 @@ import os
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot (
-    command_prefix=".",
+    command_prefix=Utils.get_server_prefix,
     intents=intents,
     case_insensitive=True,
     help_command=PrettyHelp(color=0x784513),
@@ -34,12 +36,21 @@ async def on_ready():
     print("Logged in")
     print(f"Username: {bot.user.name}")
     print(f"Userid  : {bot.user.id}")
-    bot.AUTHOR = get(bot.get_all_members(), id=bot.AUTHOR)
-
+    # Get a discord.Member object of the bot's author
+    bot.AUTHOR = bot.get_user(bot.AUTHOR)
+ 
 # Load all cogs in the "cogs" subfolder
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         bot.load_extension(f"cogs.{filename[:-3]}")
+
+# Load all user stats
+os.chdir(f"{bot.BASE_DIR}/resources")
+with open("stats.json", "r") as f:
+    # member_stats = {user_id: [health, cooldown, killed_by]}
+    bot.member_stats = json.load(f)
+    print(f"Loaded stats for {len(bot.member_stats.keys())} users")
+os.chdir(bot.BASE_DIR)
 
 
 keep_alive()
