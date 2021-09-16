@@ -38,6 +38,11 @@ async def on_ready():
     print(f"Userid  : {bot.user.id}")
     # Get a discord.Member object of the bot's author
     bot.AUTHOR = bot.get_user(bot.AUTHOR)
+
+@bot.event
+async def on_message(message):
+    if message.content.startswith("...") and message.channel.id == 845068173832224788:
+        await message.channel.send(f"`...` is not a valid command, you can do `{Utils.get_server_prefix(bot, message)}help` to view a full list of commands.")
  
 # Load all cogs in the "cogs" subfolder
 for filename in os.listdir("./cogs"):
